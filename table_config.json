@@ -1,0 +1,17 @@
+{
+  "defaults": {
+    "use_upsert": true,
+    "file_detection": "LastUpdateTimeFileDetection"
+  },
+  "overrides": {
+    "APPUSER.SENSOR_READINGS": {
+      "key_columns": ["ID"]
+    }
+  },
+  "_comment": {
+    "source": "Oracle 21c XE (XEPDB1) via Debezium 2.7.3 LogMiner",
+    "topic_prefix": "oracle-cdc",
+    "decimal_handling_mode": "double",
+    "time_precision_mode": "connect"
+  }
+}

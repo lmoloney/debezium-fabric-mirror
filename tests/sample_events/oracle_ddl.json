@@ -1,0 +1,472 @@
+{
+  "schema": {
+    "type": "struct",
+    "fields": [
+      {
+        "type": "struct",
+        "fields": [
+          {
+            "type": "string",
+            "optional": false,
+            "field": "version"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "connector"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "name"
+          },
+          {
+            "type": "int64",
+            "optional": false,
+            "field": "ts_ms"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "name": "io.debezium.data.Enum",
+            "version": 1,
+            "parameters": {
+              "allowed": "true,last,false,incremental"
+            },
+            "default": "false",
+            "field": "snapshot"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "db"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "sequence"
+          },
+          {
+            "type": "int64",
+            "optional": true,
+            "field": "ts_us"
+          },
+          {
+            "type": "int64",
+            "optional": true,
+            "field": "ts_ns"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "schema"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "table"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "txId"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "scn"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "commit_scn"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "lcr_position"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "rs_id"
+          },
+          {
+            "type": "int64",
+            "optional": true,
+            "field": "ssn"
+          },
+          {
+            "type": "int32",
+            "optional": true,
+            "field": "redo_thread"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "user_name"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "redo_sql"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "row_id"
+          }
+        ],
+        "optional": false,
+        "name": "io.debezium.connector.oracle.Source",
+        "field": "source"
+      },
+      {
+        "type": "int64",
+        "optional": false,
+        "field": "ts_ms"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "databaseName"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "schemaName"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "ddl"
+      },
+      {
+        "type": "array",
+        "items": {
+          "type": "struct",
+          "fields": [
+            {
+              "type": "string",
+              "optional": false,
+              "field": "type"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "id"
+            },
+            {
+              "type": "struct",
+              "fields": [
+                {
+                  "type": "string",
+                  "optional": true,
+                  "field": "defaultCharsetName"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "optional": false
+                  },
+                  "optional": true,
+                  "field": "primaryKeyColumnNames"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "type": "string",
+                        "optional": false,
+                        "field": "name"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": false,
+                        "field": "jdbcType"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "nativeType"
+                      },
+                      {
+                        "type": "string",
+                        "optional": false,
+                        "field": "typeName"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "typeExpression"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "charsetName"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "length"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "scale"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": false,
+                        "field": "position"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "optional"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "autoIncremented"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "generated"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "comment"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "defaultValueExpression"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "optional": false
+                        },
+                        "optional": true,
+                        "field": "enumValues"
+                      }
+                    ],
+                    "optional": false,
+                    "name": "io.debezium.connector.schema.Column",
+                    "version": 1
+                  },
+                  "optional": false,
+                  "field": "columns"
+                },
+                {
+                  "type": "string",
+                  "optional": true,
+                  "field": "comment"
+                }
+              ],
+              "optional": true,
+              "name": "io.debezium.connector.schema.Table",
+              "version": 1,
+              "field": "table"
+            }
+          ],
+          "optional": false,
+          "name": "io.debezium.connector.schema.Change",
+          "version": 1
+        },
+        "optional": false,
+        "field": "tableChanges"
+      }
+    ],
+    "optional": false,
+    "name": "io.debezium.connector.oracle.SchemaChangeValue",
+    "version": 1
+  },
+  "payload": {
+    "source": {
+      "version": "2.7.3.Final",
+      "connector": "oracle",
+      "name": "oracle-cdc",
+      "ts_ms": 1773787441615,
+      "snapshot": "true",
+      "db": "XEPDB1",
+      "sequence": null,
+      "ts_us": 1773787441615000,
+      "ts_ns": 1773787441615000000,
+      "schema": "APPUSER",
+      "table": "SENSOR_READINGS",
+      "txId": null,
+      "scn": "4055051",
+      "commit_scn": null,
+      "lcr_position": null,
+      "rs_id": null,
+      "ssn": 0,
+      "redo_thread": null,
+      "user_name": null,
+      "redo_sql": null,
+      "row_id": null
+    },
+    "ts_ms": 1773787441858,
+    "databaseName": "XEPDB1",
+    "schemaName": "APPUSER",
+    "ddl": "\n  CREATE TABLE \"APPUSER\".\"SENSOR_READINGS\" \n   (\t\"ID\" NUMBER GENERATED ALWAYS AS IDENTITY MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE  NOKEEP  NOSCALE  NOT NULL ENABLE, \n\t\"SENSOR_ID\" VARCHAR2(20) NOT NULL ENABLE, \n\t\"TEMPERATURE\" NUMBER(5,2), \n\t\"HUMIDITY\" NUMBER(5,2), \n\t\"PRESSURE\" NUMBER(7,2), \n\t\"STATUS\" VARCHAR2(20) DEFAULT 'OK', \n\t\"READING_TS\" TIMESTAMP (6) DEFAULT SYSTIMESTAMP, \n\t\"UPDATED_AT\" TIMESTAMP (6) DEFAULT SYSTIMESTAMP, \n\t PRIMARY KEY (\"ID\")\n  USING INDEX  ENABLE\n   ) ;",
+    "tableChanges": [
+      {
+        "type": "CREATE",
+        "id": "\"XEPDB1\".\"APPUSER\".\"SENSOR_READINGS\"",
+        "table": {
+          "defaultCharsetName": null,
+          "primaryKeyColumnNames": [
+            "ID"
+          ],
+          "columns": [
+            {
+              "name": "ID",
+              "jdbcType": 2,
+              "nativeType": null,
+              "typeName": "NUMBER",
+              "typeExpression": "NUMBER",
+              "charsetName": null,
+              "length": 0,
+              "scale": null,
+              "position": 1,
+              "optional": false,
+              "autoIncremented": true,
+              "generated": false,
+              "comment": null,
+              "defaultValueExpression": "\"APPUSER\".\"ISEQ$$_75718\".nextval",
+              "enumValues": null
+            },
+            {
+              "name": "SENSOR_ID",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 20,
+              "scale": null,
+              "position": 2,
+              "optional": false,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "defaultValueExpression": null,
+              "enumValues": null
+            },
+            {
+              "name": "TEMPERATURE",
+              "jdbcType": 2,
+              "nativeType": null,
+              "typeName": "NUMBER",
+              "typeExpression": "NUMBER",
+              "charsetName": null,
+              "length": 5,
+              "scale": 2,
+              "position": 3,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "defaultValueExpression": null,
+              "enumValues": null
+            },
+            {
+              "name": "HUMIDITY",
+              "jdbcType": 2,
+              "nativeType": null,
+              "typeName": "NUMBER",
+              "typeExpression": "NUMBER",
+              "charsetName": null,
+              "length": 5,
+              "scale": 2,
+              "position": 4,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "defaultValueExpression": null,
+              "enumValues": null
+            },
+            {
+              "name": "PRESSURE",
+              "jdbcType": 2,
+              "nativeType": null,
+              "typeName": "NUMBER",
+              "typeExpression": "NUMBER",
+              "charsetName": null,
+              "length": 7,
+              "scale": 2,
+              "position": 5,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "defaultValueExpression": null,
+              "enumValues": null
+            },
+            {
+              "name": "STATUS",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 20,
+              "scale": null,
+              "position": 6,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "defaultValueExpression": "'OK'",
+              "enumValues": null
+            },
+            {
+              "name": "READING_TS",
+              "jdbcType": 93,
+              "nativeType": null,
+              "typeName": "TIMESTAMP(6)",
+              "typeExpression": "TIMESTAMP(6)",
+              "charsetName": null,
+              "length": 6,
+              "scale": null,
+              "position": 7,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "defaultValueExpression": "SYSTIMESTAMP",
+              "enumValues": null
+            },
+            {
+              "name": "UPDATED_AT",
+              "jdbcType": 93,
+              "nativeType": null,
+              "typeName": "TIMESTAMP(6)",
+              "typeExpression": "TIMESTAMP(6)",
+              "charsetName": null,
+              "length": 6,
+              "scale": null,
+              "position": 8,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "defaultValueExpression": "SYSTIMESTAMP\n",
+              "enumValues": null
+            }
+          ],
+          "comment": null
+        }
+      }
+    ]
+  }
+}
