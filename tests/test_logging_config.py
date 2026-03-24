@@ -38,8 +38,13 @@ class TestJsonFormatterOutput:
     def test_produces_valid_json(self):
         formatter = JsonFormatter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="hello", args=(), exc_info=None,
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="hello",
+            args=(),
+            exc_info=None,
         )
         output = formatter.format(record)
         parsed = json.loads(output)
@@ -48,8 +53,13 @@ class TestJsonFormatterOutput:
     def test_fields_match_record(self):
         formatter = JsonFormatter()
         record = logging.LogRecord(
-            name="my.logger", level=logging.WARNING, pathname="", lineno=0,
-            msg="something happened", args=(), exc_info=None,
+            name="my.logger",
+            level=logging.WARNING,
+            pathname="",
+            lineno=0,
+            msg="something happened",
+            args=(),
+            exc_info=None,
         )
         parsed = json.loads(formatter.format(record))
         assert parsed["level"] == "WARNING"
@@ -69,11 +79,17 @@ class TestJsonFormatterException:
             raise ValueError("boom")
         except ValueError:
             import sys
+
             exc_info = sys.exc_info()
 
         record = logging.LogRecord(
-            name="test", level=logging.ERROR, pathname="", lineno=0,
-            msg="err", args=(), exc_info=exc_info,
+            name="test",
+            level=logging.ERROR,
+            pathname="",
+            lineno=0,
+            msg="err",
+            args=(),
+            exc_info=exc_info,
         )
         parsed = json.loads(formatter.format(record))
         assert "exception" in parsed
@@ -89,15 +105,18 @@ class TestJsonFormatterTimestamp:
     def test_iso8601_utc_format(self):
         formatter = JsonFormatter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="ts", args=(), exc_info=None,
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="ts",
+            args=(),
+            exc_info=None,
         )
         parsed = json.loads(formatter.format(record))
         ts = parsed["timestamp"]
         # Expected: YYYY-MM-DDTHH:MM:SS.mmmZ
-        assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z", ts), (
-            f"Unexpected timestamp format: {ts}"
-        )
+        assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z", ts), f"Unexpected timestamp format: {ts}"
 
 
 # ---------------------------------------------------------------------------
@@ -145,6 +164,15 @@ class TestConfigureLoggingCustomLevels:
 # ---------------------------------------------------------------------------
 # configure_logging — JSON format selection
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.usefixtures("_cleanup_logging")
+class TestConfigureLoggingUrllib3:
+    def test_urllib3_uses_azure_level(self):
+        config = AppConfig(**_DUMMY_CONFIG_KWARGS, azure_log_level="ERROR")
+        configure_logging(config)
+        urllib3_logger = logging.getLogger("urllib3")
+        assert urllib3_logger.level == logging.ERROR
 
 
 @pytest.mark.usefixtures("_cleanup_logging")

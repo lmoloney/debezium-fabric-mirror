@@ -88,3 +88,8 @@ class EventBuffer:
     def total_buffered(self) -> int:
         """Total number of events across all table buffers."""
         return sum(len(events) for events in self._buffers.values())
+
+    @property
+    def table_count(self) -> int:
+        """Number of tables with buffered events."""
+        return sum(1 for events in self._buffers.values() if events)

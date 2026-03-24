@@ -54,3 +54,7 @@ def configure_logging(config: AppConfig) -> None:
     # Azure SDK logger level — suppress the AMQP/HTTP noise
     azure_logger = logging.getLogger("azure")
     azure_logger.setLevel(getattr(logging, config.azure_log_level.upper(), logging.WARNING))
+
+    # urllib3 noise comes from Azure SDK HTTP calls — same treatment
+    urllib3_logger = logging.getLogger("urllib3")
+    urllib3_logger.setLevel(getattr(logging, config.azure_log_level.upper(), logging.WARNING))

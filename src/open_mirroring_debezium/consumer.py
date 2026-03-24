@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
@@ -23,23 +24,29 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Heartbeat state
+_last_heartbeat: float = 0.0
+_events_flushed_since_heartbeat: int = 0
+
 
 def flush_tables(
     table_keys: list[str],
     buffer: EventBuffer,
     writer: OneLakeWriter,
-) -> tuple[int, int]:
+) -> tuple[int, int, int]:
     """Flush buffered events for the given tables: build parquet and upload.
 
-    Returns (tables_ok, tables_failed).
+    Returns (tables_ok, tables_failed, total_events_flushed).
     """
     tables_ok = 0
     tables_failed = 0
+    total_events = 0
 
     for table_key in table_keys:
         events = buffer.flush(table_key)
         if not events:
             continue
+        total_events += len(events)
         schema, table = table_key.split(".", 1)
         try:
             table_cfg = get_table_config(schema, table)
@@ -56,7 +63,7 @@ def flush_tables(
                 len(events),
             )
 
-    return tables_ok, tables_failed
+    return tables_ok, tables_failed, total_events
 
 
 async def process_batch(
@@ -73,10 +80,17 @@ async def process_batch(
     *not* checkpointed — on restart they will be re-delivered by EventHub
     (at-least-once) and our upsert semantics make this safe.
     """
-    if not events:
-        return
-
     partition_id: str = partition_context.partition_id or "?"
+
+    if not events:
+        logger.debug(
+            "Partition %s — no new events (buffer: %d events across %d tables)",
+            partition_id,
+            buffer.total_buffered,
+            buffer.table_count,
+        )
+        _check_heartbeat(config, buffer)
+        return
     parsed_by_table: dict[str, list[ParsedEvent]] = defaultdict(list)
     skipped_events: int = 0
 
@@ -110,9 +124,19 @@ async def process_batch(
     # Check which tables are ready to flush
     ready = buffer.tables_ready()
     if not ready:
+        logger.debug(
+            "Partition %s — buffered %d events (total: %d events across %d tables)",
+            partition_id,
+            sum(len(evts) for evts in parsed_by_table.values()),
+            buffer.total_buffered,
+            buffer.table_count,
+        )
+        _check_heartbeat(config, buffer)
         return
 
-    tables_ok, tables_failed = flush_tables(ready, buffer, writer)
+    global _events_flushed_since_heartbeat
+    tables_ok, tables_failed, events_flushed = flush_tables(ready, buffer, writer)
+    _events_flushed_since_heartbeat += events_flushed
 
     if tables_ok > 0:
         await partition_context.update_checkpoint()
@@ -130,6 +154,26 @@ async def process_batch(
             tables_failed,
             len(events),
         )
+
+    _check_heartbeat(config, buffer)
+
+
+def _check_heartbeat(config: AppConfig, buffer: EventBuffer) -> None:
+    """Emit an INFO heartbeat at the flush_max_interval cadence."""
+    global _last_heartbeat, _events_flushed_since_heartbeat
+    now = time.monotonic()
+    if _last_heartbeat == 0.0:
+        _last_heartbeat = now
+
+    if now - _last_heartbeat >= config.flush_max_interval_seconds:
+        logger.info(
+            "Heartbeat — %d events buffered across %d tables, %d events flushed since last heartbeat",
+            buffer.total_buffered,
+            buffer.table_count,
+            _events_flushed_since_heartbeat,
+        )
+        _last_heartbeat = now
+        _events_flushed_since_heartbeat = 0
 
 
 def main() -> None:
@@ -205,7 +249,10 @@ def main() -> None:
                             len(events_list),
                         )
 
-    asyncio.run(run())
+    try:
+        asyncio.run(run())
+    except KeyboardInterrupt:
+        logger.info("Consumer stopped.")
 
 
 if __name__ == "__main__":
