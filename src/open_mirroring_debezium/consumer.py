@@ -229,11 +229,13 @@ def main() -> None:
                     max_wait_time=5,
                     starting_position=starting_pos,
                 )
+        except asyncio.CancelledError:
+            pass
         finally:
-            # Flush any remaining buffered events on shutdown
+            logger.info("Shutting down… (press Ctrl+C again to force)")
             remaining = buffer.flush_all()
             if remaining:
-                logger.info("Shutdown: flushing %d remaining tables", len(remaining))
+                logger.info("Flushing %d remaining tables", len(remaining))
                 for table_key, events_list in remaining.items():
                     schema, table = table_key.split(".", 1)
                     try:
@@ -252,6 +254,11 @@ def main() -> None:
     try:
         asyncio.run(run())
     except KeyboardInterrupt:
+        # Second Ctrl+C during shutdown flush — force exit
+        pass
+    finally:
+        # Suppress asyncio cleanup warnings (aiohttp unclosed sessions) on exit
+        logging.getLogger("asyncio").setLevel(logging.CRITICAL)
         logger.info("Consumer stopped.")
 
 

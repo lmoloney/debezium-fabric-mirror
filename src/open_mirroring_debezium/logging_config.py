@@ -58,3 +58,6 @@ def configure_logging(config: AppConfig) -> None:
     # urllib3 noise comes from Azure SDK HTTP calls — same treatment
     urllib3_logger = logging.getLogger("urllib3")
     urllib3_logger.setLevel(getattr(logging, config.azure_log_level.upper(), logging.WARNING))
+
+    # asyncio internals (selector, unclosed connections) — suppress below WARNING
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
