@@ -15,6 +15,7 @@ class TestParseSnapshot:
 
     def test_snapshot_uses_after(self, oracle_snapshot):
         result = parse_event(oracle_snapshot)
+        assert isinstance(result, ParsedEvent)
         assert "TEMPERATURE" in result.row_data
         assert "HUMIDITY" in result.row_data
 
@@ -41,6 +42,7 @@ class TestParseUpdate:
 
     def test_update_has_after_data(self, oracle_update):
         result = parse_event(oracle_update)
+        assert isinstance(result, ParsedEvent)
         assert "TEMPERATURE" in result.row_data
 
 
@@ -63,11 +65,13 @@ class TestParseDDL:
 
     def test_ddl_schema_table(self, oracle_ddl):
         result = parse_event(oracle_ddl)
+        assert isinstance(result, ParsedDDL)
         assert result.schema_name == "APPUSER"
         assert result.table_name == "SENSOR_READINGS"
 
     def test_ddl_columns(self, oracle_ddl):
         result = parse_event(oracle_ddl)
+        assert isinstance(result, ParsedDDL)
         col_names = [c["name"] for c in result.columns]
         assert "ID" in col_names
         assert "TEMPERATURE" in col_names
@@ -77,6 +81,7 @@ class TestParseDDL:
 class TestRowMarkerInRowData:
     def test_row_marker_in_row_data(self, oracle_insert):
         result = parse_event(oracle_insert)
+        assert isinstance(result, ParsedEvent)
         assert "__rowMarker__" in result.row_data
         assert result.row_data["__rowMarker__"] == result.row_marker
 
@@ -84,11 +89,13 @@ class TestRowMarkerInRowData:
 class TestSchemaTableExtraction:
     def test_schema_table_extraction(self, oracle_snapshot):
         result = parse_event(oracle_snapshot)
+        assert isinstance(result, ParsedEvent)
         assert result.schema_name == "APPUSER"
         assert result.table_name == "SENSOR_READINGS"
 
     def test_all_dml_events_same_table(self, oracle_snapshot, oracle_insert, oracle_update, oracle_delete):
         for body in [oracle_snapshot, oracle_insert, oracle_update, oracle_delete]:
             result = parse_event(body)
+            assert isinstance(result, ParsedEvent)
             assert result.schema_name == "APPUSER"
             assert result.table_name == "SENSOR_READINGS"

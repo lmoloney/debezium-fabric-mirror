@@ -129,7 +129,9 @@ def parse_event(body: dict[str, Any]) -> ParsedEvent | ParsedDDL | None:
         if after is None:
             logger.warning(
                 "Non-delete event (op=%s) missing 'after' data (table=%s.%s) — skipping",
-                op, schema_name, table_name,
+                op,
+                schema_name,
+                table_name,
             )
             return None
         row_data = dict(after)

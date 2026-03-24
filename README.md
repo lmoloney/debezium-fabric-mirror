@@ -55,6 +55,11 @@ uv run pyright
 | `ONELAKE_MIRRORED_DB_ID` | Mirrored database GUID | Yes |
 | `TABLE_CONFIG_PATH` | Path to `table_config.json` (default: `./table_config.json`) | No |
 | `EVENTHUB_STARTING_POSITION` | Where to start reading when no checkpoint exists: `latest` (default, new events only), `earliest` (beginning of retention window), or a numeric sequence number. Ignored once a checkpoint is saved. | No |
+| `SOURCE_TYPE` | Source database type for `_partnerEvents.json` (default: `Oracle`) | No |
+| `FLUSH_MIN_RECORDS` | Minimum events per table before flushing to Parquet (default: `100`) | No |
+| `FLUSH_MAX_RECORDS` | Maximum events per table before forced flush (default: `10000`) | No |
+| `FLUSH_MIN_INTERVAL_SECONDS` | Minimum seconds between flushes per table (default: `1.0`) | No |
+| `FLUSH_MAX_INTERVAL_SECONDS` | Maximum seconds before forced flush per table (default: `30.0`) | No |
 
 ### Table Config
 

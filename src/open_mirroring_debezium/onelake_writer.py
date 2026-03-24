@@ -44,6 +44,35 @@ class OneLakeWriter:
         self._fs = self._service.get_file_system_client(workspace_id)
         self._db_id = mirrored_db_id
         self._initialized_tables: set[str] = set()
+        self._partner_events_written: bool = False
+
+    def ensure_partner_events(self, source_type: str = "Oracle") -> None:
+        """Create ``_partnerEvents.json`` at the landing zone root if not already done.
+
+        This file is recommended by Microsoft to identify the mirroring partner.
+        Uses ``overwrite=True`` so concurrent instances won't fail.
+        """
+        if self._partner_events_written:
+            return
+
+        dir_client = self._fs.get_directory_client(f"{self._db_id}/Files/LandingZone")
+        with contextlib.suppress(Exception):
+            dir_client.create_directory()
+
+        file_client = dir_client.get_file_client("_partnerEvents.json")
+        content = json.dumps(
+            {
+                "partnerName": "OpenMirroringDebezium",
+                "sourceInfo": {
+                    "sourceType": source_type,
+                    "sourceVersion": "",
+                    "additionalInformation": {},
+                },
+            }
+        ).encode()
+        file_client.upload_data(content, overwrite=True)
+        logger.info("Ensured _partnerEvents.json (sourceType=%s)", source_type)
+        self._partner_events_written = True
 
     def _landing_path(self, schema: str, table: str) -> str:
         """Return the ADLS directory path for a given schema.table in the landing zone."""
@@ -80,32 +109,21 @@ class OneLakeWriter:
     def upload_parquet(self, schema: str, table: str, data: bytes) -> str:
         """Upload Parquet bytes to the landing zone with retry on transient failures.
 
-        Uses a temp-file-then-rename pattern for atomic writes.
         Retries up to ``_MAX_RETRIES`` times with exponential backoff on
         HTTP 429/500/503 and connection errors.
         Returns the final file name.
         """
         path = self._landing_path(schema, table)
         dir_client = self._fs.get_directory_client(path)
-
         file_name = f"{uuid.uuid4().hex}.parquet"
-        temp_name = f"_{file_name}"
 
         last_exc: Exception | None = None
         for attempt in range(_MAX_RETRIES):
             try:
-                # Upload to a temp file first
-                temp_client = dir_client.get_file_client(temp_name)
-                temp_client.upload_data(data, overwrite=True)
-
-                # Atomic rename
-                final_client = dir_client.get_file_client(file_name)
-                source_path = f"{path}/{temp_name}"
-                final_client.rename_file(f"{self._fs.file_system_name}/{source_path}")
-
+                file_client = dir_client.get_file_client(file_name)
+                file_client.upload_data(data, overwrite=True)
                 logger.info("Uploaded %s to %s (%d bytes)", file_name, path, len(data))
                 return file_name
-
             except Exception as exc:
                 last_exc = exc
                 if attempt < _MAX_RETRIES - 1 and _is_retryable(exc):
@@ -122,5 +140,4 @@ class OneLakeWriter:
                 else:
                     raise
 
-        # Unreachable in practice, but satisfies type checkers
         raise last_exc  # type: ignore[misc]

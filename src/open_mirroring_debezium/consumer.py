@@ -13,6 +13,7 @@ from azure.eventhub.extensions.checkpointstoreblobaio import BlobCheckpointStore
 
 from .config import AppConfig, get_table_config, load_config, register_table_from_ddl
 from .debezium_parser import ParsedDDL, ParsedEvent, parse_event
+from .event_buffer import EventBuffer, FlushConfig
 from .onelake_writer import OneLakeWriter
 from .parquet_writer import build_parquet
 
@@ -23,17 +24,54 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def flush_tables(
+    table_keys: list[str],
+    buffer: EventBuffer,
+    writer: OneLakeWriter,
+) -> tuple[int, int]:
+    """Flush buffered events for the given tables: build parquet and upload.
+
+    Returns (tables_ok, tables_failed).
+    """
+    tables_ok = 0
+    tables_failed = 0
+
+    for table_key in table_keys:
+        events = buffer.flush(table_key)
+        if not events:
+            continue
+        schema, table = table_key.split(".", 1)
+        try:
+            table_cfg = get_table_config(schema, table)
+            writer.ensure_table(schema, table, table_cfg.key_columns)
+            parquet_bytes = build_parquet(events, key_columns=table_cfg.key_columns)
+            writer.upload_parquet(schema, table, parquet_bytes)
+            tables_ok += 1
+            logger.info("Flushed %s (%d events)", table_key, len(events))
+        except Exception:
+            tables_failed += 1
+            logger.exception(
+                "FAILED to flush table %s (%d events lost)",
+                table_key,
+                len(events),
+            )
+
+    return tables_ok, tables_failed
+
+
 async def process_batch(
     partition_context: PartitionContext,
     events: list[EventData],
     config: AppConfig,
     writer: OneLakeWriter,
+    buffer: EventBuffer,
 ) -> None:
-    """Parse a batch of EventHub messages, group by table, and upload Parquet files.
+    """Parse a batch of EventHub messages, buffer by table, and flush when thresholds are met.
 
-    Each table's parquet build + upload is isolated: a failure for one table
-    does not block others.  The checkpoint is only updated when at least one
-    table was successfully processed.
+    Checkpoint is only advanced when data has been successfully flushed to
+    OneLake.  Events that are buffered but not yet flushed are intentionally
+    *not* checkpointed — on restart they will be re-delivered by EventHub
+    (at-least-once) and our upsert semantics make this safe.
     """
     if not events:
         return
@@ -65,43 +103,27 @@ async def process_batch(
     if skipped_events:
         logger.warning("Partition %s — skipped %d unparseable events", partition_id, skipped_events)
 
-    tables_ok: int = 0
-    tables_failed: int = 0
-
+    # Add parsed events to the buffer
     for table_key, table_events in parsed_by_table.items():
-        schema, table = table_key.split(".", 1)
-        try:
-            table_cfg = get_table_config(schema, table)
-            writer.ensure_table(schema, table, table_cfg.key_columns)
-            parquet_bytes = build_parquet(table_events, key_columns=table_cfg.key_columns)
-            writer.upload_parquet(schema, table, parquet_bytes)
-            tables_ok += 1
-            logger.info(
-                "Partition %s — uploaded %s (%d events)",
-                partition_id,
-                table_key,
-                len(table_events),
-            )
-        except Exception:
-            tables_failed += 1
-            logger.exception(
-                "Partition %s — FAILED to process table %s (%d events lost)",
-                partition_id,
-                table_key,
-                len(table_events),
-            )
+        buffer.add(table_key, table_events)
 
-    # Only checkpoint if at least some work succeeded
+    # Check which tables are ready to flush
+    ready = buffer.tables_ready()
+    if not ready:
+        return
+
+    tables_ok, tables_failed = flush_tables(ready, buffer, writer)
+
     if tables_ok > 0:
         await partition_context.update_checkpoint()
         logger.info(
-            "Checkpoint updated — partition %s, %d events, %d tables ok, %d tables failed",
+            "Checkpoint updated — partition %s, %d events, %d tables flushed, %d tables failed",
             partition_id,
             len(events),
             tables_ok,
             tables_failed,
         )
-    elif parsed_by_table:
+    elif tables_failed > 0:
         logger.error(
             "Partition %s — all %d tables failed, checkpoint NOT updated (%d events)",
             partition_id,
@@ -123,6 +145,15 @@ def main() -> None:
 
     config = load_config()
     writer = OneLakeWriter(config.workspace_id, config.mirrored_db_id)
+    writer.ensure_partner_events(config.source_type)
+
+    flush_config = FlushConfig(
+        min_records=config.flush_min_records,
+        max_records=config.flush_max_records,
+        min_interval_seconds=config.flush_min_interval_seconds,
+        max_interval_seconds=config.flush_max_interval_seconds,
+    )
+    buffer = EventBuffer(flush_config)
 
     checkpoint_store = BlobCheckpointStore.from_connection_string(
         config.checkpoint_blob_connection_string,
@@ -136,7 +167,7 @@ def main() -> None:
     )
 
     async def on_event_batch(partition_context: PartitionContext, events: list[EventData]) -> None:
-        await process_batch(partition_context, events, config, writer)
+        await process_batch(partition_context, events, config, writer, buffer)
 
     async def run() -> None:
         starting_pos = config.resolved_starting_position
@@ -146,13 +177,33 @@ def main() -> None:
             config.eventhub_name,
             starting_pos,
         )
-        async with client:
-            await client.receive_batch(
-                on_event_batch=on_event_batch,
-                max_batch_size=500,
-                max_wait_time=5,
-                starting_position=starting_pos,
-            )
+        try:
+            async with client:
+                await client.receive_batch(
+                    on_event_batch=on_event_batch,
+                    max_batch_size=500,
+                    max_wait_time=5,
+                    starting_position=starting_pos,
+                )
+        finally:
+            # Flush any remaining buffered events on shutdown
+            remaining = buffer.flush_all()
+            if remaining:
+                logger.info("Shutdown: flushing %d remaining tables", len(remaining))
+                for table_key, events_list in remaining.items():
+                    schema, table = table_key.split(".", 1)
+                    try:
+                        table_cfg = get_table_config(schema, table)
+                        writer.ensure_table(schema, table, table_cfg.key_columns)
+                        parquet_bytes = build_parquet(events_list, key_columns=table_cfg.key_columns)
+                        writer.upload_parquet(schema, table, parquet_bytes)
+                        logger.info("Shutdown flush: %s (%d events)", table_key, len(events_list))
+                    except Exception:
+                        logger.exception(
+                            "Shutdown flush FAILED for %s (%d events lost)",
+                            table_key,
+                            len(events_list),
+                        )
 
     asyncio.run(run())
 

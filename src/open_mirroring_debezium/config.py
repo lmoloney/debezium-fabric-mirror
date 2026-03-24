@@ -33,7 +33,12 @@ class AppConfig:
     workspace_id: str
     mirrored_db_id: str
     table_config_path: str
+    source_type: str = "Oracle"
     eventhub_starting_position: str = "latest"
+    flush_min_records: int = 100
+    flush_max_records: int = 10_000
+    flush_min_interval_seconds: float = 1.0
+    flush_max_interval_seconds: float = 30.0
 
     @property
     def resolved_starting_position(self) -> str | int:
@@ -80,7 +85,12 @@ def load_config() -> AppConfig:
         workspace_id=os.environ["ONELAKE_WORKSPACE_ID"],
         mirrored_db_id=os.environ["ONELAKE_MIRRORED_DB_ID"],
         table_config_path=os.environ.get("TABLE_CONFIG_PATH", "./table_config.json"),
+        source_type=os.environ.get("SOURCE_TYPE", "Oracle"),
         eventhub_starting_position=os.environ.get("EVENTHUB_STARTING_POSITION", "latest"),
+        flush_min_records=int(os.environ.get("FLUSH_MIN_RECORDS", "100")),
+        flush_max_records=int(os.environ.get("FLUSH_MAX_RECORDS", "10000")),
+        flush_min_interval_seconds=float(os.environ.get("FLUSH_MIN_INTERVAL_SECONDS", "1.0")),
+        flush_max_interval_seconds=float(os.environ.get("FLUSH_MAX_INTERVAL_SECONDS", "30.0")),
     )
 
     table_cfg_path = Path(config.table_config_path)
