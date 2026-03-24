@@ -60,6 +60,9 @@ uv run pyright
 | `FLUSH_MAX_RECORDS` | Maximum events per table before forced flush (default: `10000`) | No |
 | `FLUSH_MIN_INTERVAL_SECONDS` | Minimum seconds between flushes per table (default: `1.0`) | No |
 | `FLUSH_MAX_INTERVAL_SECONDS` | Maximum seconds before forced flush per table (default: `30.0`) | No |
+| `LOG_LEVEL` | Application log level (default: `INFO`). Accepts `DEBUG`, `INFO`, `WARNING`, `ERROR` | No |
+| `AZURE_LOG_LEVEL` | Azure SDK log level (default: `WARNING`). Controls AMQP/HTTP noise from the Azure EventHub and Storage SDKs | No |
+| `LOG_FORMAT` | Log output format: `text` (default, human-readable) or `json` (structured, for container log aggregation) | No |
 
 ### Table Config
 

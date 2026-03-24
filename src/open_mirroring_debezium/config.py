@@ -39,6 +39,9 @@ class AppConfig:
     flush_max_records: int = 10_000
     flush_min_interval_seconds: float = 1.0
     flush_max_interval_seconds: float = 30.0
+    log_level: str = "INFO"
+    azure_log_level: str = "WARNING"
+    log_format: str = "text"
 
     @property
     def resolved_starting_position(self) -> str | int:
@@ -91,6 +94,9 @@ def load_config() -> AppConfig:
         flush_max_records=int(os.environ.get("FLUSH_MAX_RECORDS", "10000")),
         flush_min_interval_seconds=float(os.environ.get("FLUSH_MIN_INTERVAL_SECONDS", "1.0")),
         flush_max_interval_seconds=float(os.environ.get("FLUSH_MAX_INTERVAL_SECONDS", "30.0")),
+        log_level=os.environ.get("LOG_LEVEL", "INFO"),
+        azure_log_level=os.environ.get("AZURE_LOG_LEVEL", "WARNING"),
+        log_format=os.environ.get("LOG_FORMAT", "text"),
     )
 
     table_cfg_path = Path(config.table_config_path)

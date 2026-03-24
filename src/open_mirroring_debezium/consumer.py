@@ -138,12 +138,12 @@ def main() -> None:
 
     load_dotenv()
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)-8s %(name)s — %(message)s",
-    )
-
     config = load_config()
+
+    from .logging_config import configure_logging
+
+    configure_logging(config)
+
     writer = OneLakeWriter(config.workspace_id, config.mirrored_db_id)
     writer.ensure_partner_events(config.source_type)
 
