@@ -22,7 +22,7 @@ on four configurable thresholds:
 | `FLUSH_MIN_RECORDS` | 100 | Don't flush until at least this many records per table |
 | `FLUSH_MAX_RECORDS` | 10,000 | Flush immediately at this count (memory bound) |
 | `FLUSH_MIN_INTERVAL_SECONDS` | 1.0 | Rate-limit uploads during burst traffic |
-| `FLUSH_MAX_INTERVAL_SECONDS` | 30.0 | Always flush after this long (latency bound) |
+| `FLUSH_MAX_INTERVAL_SECONDS` | 60.0 | Always flush after this long (latency bound) |
 
 Checkpoint only advances after data is successfully flushed to OneLake. Buffered-but-not-
 flushed events are intentionally not checkpointed — EventHub re-delivers them on restart,
