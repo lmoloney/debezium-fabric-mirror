@@ -9,10 +9,13 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy source
+COPY README.md ./
 COPY src/ src/
 COPY table_config.json ./
 RUN uv sync --frozen --no-dev
 
-EXPOSE 8080
+# Run as non-root
+RUN useradd --create-home --uid 1000 omd
+USER omd
 
 CMD ["uv", "run", "omd-consumer"]

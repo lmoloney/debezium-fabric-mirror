@@ -6,12 +6,6 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12"
 authors = [{ name = "Luke Moloney" }]
-
-[project.urls]
-Repository = "https://github.com/lmoloney/debezium-fabric-mirror"
-Documentation = "https://github.com/lmoloney/debezium-fabric-mirror/tree/main/docs"
-Issues = "https://github.com/lmoloney/debezium-fabric-mirror/issues"
-
 dependencies = [
     "azure-eventhub>=5.11",
     "azure-eventhub-checkpointstoreblob-aio>=1.1",
@@ -20,6 +14,11 @@ dependencies = [
     "pyarrow>=15.0",
     "python-dotenv>=1.2.2",
 ]
+
+[project.urls]
+Repository = "https://github.com/lmoloney/debezium-fabric-mirror"
+Documentation = "https://github.com/lmoloney/debezium-fabric-mirror/tree/main/docs"
+Issues = "https://github.com/lmoloney/debezium-fabric-mirror/issues"
 
 [dependency-groups]
 dev = [
