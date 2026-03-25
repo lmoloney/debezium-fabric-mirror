@@ -89,6 +89,20 @@ async def process_batch(
             buffer.total_buffered,
             buffer.table_count,
         )
+        # Check time-based flushes even when no new events arrive
+        ready = buffer.tables_ready()
+        if ready:
+            global _events_flushed_since_heartbeat
+            tables_ok, tables_failed, events_flushed = flush_tables(ready, buffer, writer)
+            _events_flushed_since_heartbeat += events_flushed
+            if tables_ok > 0:
+                await partition_context.update_checkpoint()
+                logger.info(
+                    "Checkpoint updated (time-based flush) — partition %s, %d tables flushed, %d tables failed",
+                    partition_id,
+                    tables_ok,
+                    tables_failed,
+                )
         _check_heartbeat(config, buffer)
         return
     parsed_by_table: dict[str, list[ParsedEvent]] = defaultdict(list)

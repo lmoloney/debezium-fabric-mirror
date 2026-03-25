@@ -18,7 +18,7 @@ class FlushConfig:
     min_records: int = 100
     max_records: int = 10_000
     min_interval_seconds: float = 1.0
-    max_interval_seconds: float = 30.0
+    max_interval_seconds: float = 60.0
 
 
 class EventBuffer:
