@@ -3,13 +3,14 @@
 import json
 import logging
 import re
+from typing import Any
 
 import pytest
 
 from open_mirroring_debezium.config import AppConfig
 from open_mirroring_debezium.logging_config import JsonFormatter, configure_logging
 
-_DUMMY_CONFIG_KWARGS = {
+_DUMMY_CONFIG_KWARGS: dict[str, Any] = {
     "eventhub_connection_string": "fake",
     "eventhub_name": "fake",
     "eventhub_consumer_group": "$Default",
